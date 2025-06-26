@@ -36,8 +36,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from "./ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 
 interface Customer {
   id: string;
@@ -53,15 +63,32 @@ interface Customer {
   package: string;
   installationDate: string;
   lastPayment: string;
+  connection: "Telkom" | "Linknet" | "TBG";
 }
 
 const CustomerManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedConnection, setSelectedConnection] = useState<string>("all");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    package: "",
+    connection: "Telkom" as "Telkom" | "Linknet" | "TBG",
+    coordinates: { lat: -6.2088, lng: 106.8456 },
+    modemBrand: "",
+    modemModel: "",
+    serialNumber: "",
+    ontSerialNumber: "",
+    macAddress: "",
+  });
 
   // Sample data
   const customers: Customer[] = [
@@ -76,6 +103,7 @@ const CustomerManagement = () => {
       package: "Paket Home 20 Mbps",
       installationDate: "15 Jan 2023",
       lastPayment: "05 Jun 2023",
+      connection: "Telkom",
     },
     {
       id: "CUST002",
@@ -88,6 +116,7 @@ const CustomerManagement = () => {
       package: "Paket Home 50 Mbps",
       installationDate: "23 Feb 2023",
       lastPayment: "10 Jun 2023",
+      connection: "Linknet",
     },
     {
       id: "CUST003",
@@ -100,6 +129,7 @@ const CustomerManagement = () => {
       package: "Paket Home 100 Mbps",
       installationDate: "05 Mar 2023",
       lastPayment: "01 May 2023",
+      connection: "TBG",
     },
     {
       id: "CUST004",
@@ -112,6 +142,7 @@ const CustomerManagement = () => {
       package: "Paket Home 20 Mbps",
       installationDate: "Tertunda",
       lastPayment: "-",
+      connection: "Telkom",
     },
     {
       id: "CUST005",
@@ -124,10 +155,11 @@ const CustomerManagement = () => {
       package: "Paket Home 50 Mbps",
       installationDate: "12 Apr 2023",
       lastPayment: "02 Jun 2023",
+      connection: "Linknet",
     },
   ];
 
-  // Filter customers based on search query and status
+  // Filter customers based on search query, status, and connection
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,12 +169,58 @@ const CustomerManagement = () => {
     const matchesStatus =
       selectedStatus === "all" ? true : customer.status === selectedStatus;
 
-    return matchesSearch && matchesStatus;
+    const matchesConnection =
+      selectedConnection === "all"
+        ? true
+        : customer.connection === selectedConnection;
+
+    return matchesSearch && matchesStatus && matchesConnection;
   });
 
   const handleViewDetail = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsDetailOpen(true);
+  };
+
+  const handleAddCustomer = () => {
+    const customerId = `CUST${String(customers.length + 1).padStart(3, "0")}`;
+    const customerToAdd: Customer = {
+      id: customerId,
+      name: newCustomer.name,
+      address: newCustomer.address,
+      phone: newCustomer.phone,
+      email: newCustomer.email,
+      coordinates: newCustomer.coordinates,
+      status: "Tertunda",
+      package: newCustomer.package,
+      installationDate: "Tertunda",
+      lastPayment: "-",
+      connection: newCustomer.connection,
+    };
+
+    // In a real app, this would be sent to a backend
+    console.log("Adding customer:", customerToAdd);
+
+    // Reset form
+    setNewCustomer({
+      name: "",
+      address: "",
+      phone: "",
+      email: "",
+      package: "",
+      connection: "Telkom",
+      coordinates: { lat: -6.2088, lng: 106.8456 },
+      modemBrand: "",
+      modemModel: "",
+      serialNumber: "",
+      ontSerialNumber: "",
+      macAddress: "",
+    });
+
+    setIsAddCustomerOpen(false);
+
+    // Show success message (in real app, you'd use a toast)
+    alert("Pelanggan berhasil ditambahkan!");
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -162,9 +240,252 @@ const CustomerManagement = () => {
     <div className="bg-white p-6 rounded-lg shadow-sm w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manajemen Pelanggan</h1>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Tambah Pelanggan
-        </Button>
+        <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Tambah Pelanggan
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Tambah Pelanggan Baru</DialogTitle>
+              <DialogDescription>
+                Masukkan informasi pelanggan baru untuk mendaftarkan layanan
+                FTTH.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Nama
+                </Label>
+                <Input
+                  id="name"
+                  value={newCustomer.name}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, name: e.target.value })
+                  }
+                  className="col-span-3"
+                  placeholder="Nama lengkap pelanggan"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
+                  Telepon
+                </Label>
+                <Input
+                  id="phone"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, phone: e.target.value })
+                  }
+                  className="col-span-3"
+                  placeholder="08xxxxxxxxxx"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newCustomer.email}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, email: e.target.value })
+                  }
+                  className="col-span-3"
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="address" className="text-right">
+                  Alamat
+                </Label>
+                <Textarea
+                  id="address"
+                  value={newCustomer.address}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, address: e.target.value })
+                  }
+                  className="col-span-3"
+                  placeholder="Alamat lengkap pelanggan"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="package" className="text-right">
+                  Paket
+                </Label>
+                <Select
+                  value={newCustomer.package}
+                  onValueChange={(value) =>
+                    setNewCustomer({ ...newCustomer, package: value })
+                  }
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Pilih paket layanan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Paket Home 20 Mbps">
+                      Paket Home 20 Mbps
+                    </SelectItem>
+                    <SelectItem value="Paket Home 50 Mbps">
+                      Paket Home 50 Mbps
+                    </SelectItem>
+                    <SelectItem value="Paket Home 100 Mbps">
+                      Paket Home 100 Mbps
+                    </SelectItem>
+                    <SelectItem value="Paket Home 200 Mbps">
+                      Paket Home 200 Mbps
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="connection" className="text-right">
+                  Koneksi
+                </Label>
+                <Select
+                  value={newCustomer.connection}
+                  onValueChange={(value: "Telkom" | "Linknet" | "TBG") =>
+                    setNewCustomer({ ...newCustomer, connection: value })
+                  }
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Pilih provider koneksi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Telkom">Telkom</SelectItem>
+                    <SelectItem value="Linknet">Linknet</SelectItem>
+                    <SelectItem value="TBG">TBG</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-4">
+                <h4 className="font-medium text-sm mb-3 text-gray-700">
+                  Informasi Perangkat
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="modemBrand" className="text-right">
+                  Merk Modem
+                </Label>
+                <Select
+                  value={newCustomer.modemBrand}
+                  onValueChange={(value) =>
+                    setNewCustomer({ ...newCustomer, modemBrand: value })
+                  }
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Pilih merk modem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TP-Link">TP-Link</SelectItem>
+                    <SelectItem value="Huawei">Huawei</SelectItem>
+                    <SelectItem value="ZTE">ZTE</SelectItem>
+                    <SelectItem value="Fiberhome">Fiberhome</SelectItem>
+                    <SelectItem value="Nokia">Nokia</SelectItem>
+                    <SelectItem value="Alcatel">Alcatel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="modemModel" className="text-right">
+                  Model Modem
+                </Label>
+                <Input
+                  id="modemModel"
+                  value={newCustomer.modemModel}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      modemModel: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
+                  placeholder="Contoh: Archer C6, HG8245H"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="serialNumber" className="text-right">
+                  Serial Number
+                </Label>
+                <Input
+                  id="serialNumber"
+                  value={newCustomer.serialNumber}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      serialNumber: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
+                  placeholder="Serial number modem"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="ontSerialNumber" className="text-right">
+                  SN ONT
+                </Label>
+                <Input
+                  id="ontSerialNumber"
+                  value={newCustomer.ontSerialNumber}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      ontSerialNumber: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
+                  placeholder="Serial number ONT"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="macAddress" className="text-right">
+                  MAC Address
+                </Label>
+                <Input
+                  id="macAddress"
+                  value={newCustomer.macAddress}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      macAddress: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
+                  placeholder="XX:XX:XX:XX:XX:XX"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsAddCustomerOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleAddCustomer}
+                disabled={
+                  !newCustomer.name ||
+                  !newCustomer.phone ||
+                  !newCustomer.email ||
+                  !newCustomer.address ||
+                  !newCustomer.package
+                }
+              >
+                Tambah Pelanggan
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -180,7 +501,7 @@ const CustomerManagement = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="w-full md:w-64">
+        <div className="w-full md:w-48">
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
             <SelectTrigger>
               <SelectValue placeholder="Filter Status" />
@@ -190,6 +511,22 @@ const CustomerManagement = () => {
               <SelectItem value="Aktif">Aktif</SelectItem>
               <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
               <SelectItem value="Tertunda">Tertunda</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full md:w-48">
+          <Select
+            value={selectedConnection}
+            onValueChange={setSelectedConnection}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter Koneksi" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Koneksi</SelectItem>
+              <SelectItem value="Telkom">Telkom</SelectItem>
+              <SelectItem value="Linknet">Linknet</SelectItem>
+              <SelectItem value="TBG">TBG</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -207,7 +544,8 @@ const CustomerManagement = () => {
                 <TableHead>Nama</TableHead>
                 <TableHead className="hidden md:table-cell">Alamat</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Paket</TableHead>
+                <TableHead className="hidden lg:table-cell">Paket</TableHead>
+                <TableHead className="hidden lg:table-cell">Koneksi</TableHead>
                 <TableHead>Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -228,8 +566,16 @@ const CustomerManagement = () => {
                         {customer.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="hidden lg:table-cell">
                       {customer.package}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-50 text-blue-700 hover:bg-blue-50"
+                      >
+                        {customer.connection}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -245,7 +591,7 @@ const CustomerManagement = () => {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center py-4 text-gray-500"
                   >
                     Tidak ada pelanggan yang ditemukan
@@ -334,6 +680,15 @@ const CustomerManagement = () => {
                   <div className="bg-gray-50 p-4 rounded-md">
                     <h4 className="font-medium mb-2">Paket Layanan</h4>
                     <p className="text-lg">{selectedCustomer.package}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h4 className="font-medium mb-2">Provider Koneksi</h4>
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50 text-blue-700 hover:bg-blue-50 text-lg px-3 py-1"
+                    >
+                      {selectedCustomer.connection}
+                    </Badge>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Tanggal Pemasangan</h4>
